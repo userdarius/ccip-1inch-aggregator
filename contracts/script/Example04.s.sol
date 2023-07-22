@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import "forge-std/Script.sol";
 import "./Helper.sol";
-import {ProgrammableTokenTransfers} from "../src/ProgrammableTokenTransfers.sol";
+import {tokenRouter} from "../src/TokenRouter.sol";
 
 contract DeployProgrammableTokenTransfers is Script, Helper {
     function run(SupportedNetworks network) external {
@@ -12,7 +12,7 @@ contract DeployProgrammableTokenTransfers is Script, Helper {
 
         (address router,,,) = getConfigFromNetwork(network);
 
-        ProgrammableTokenTransfers programmableTokenTransfers = new ProgrammableTokenTransfers(
+        tokenRouter programmableTokenTransfers = new tokenRouter(
                 router
             );
 
@@ -28,15 +28,20 @@ contract DeployProgrammableTokenTransfers is Script, Helper {
 }
 
 contract SendTokensAndData is Script, Helper {
-    function run(address payable sender, SupportedNetworks destination, address receiver, address token, uint256 amount)
-        external
-    {
+    function run(
+        address payable sender,
+        SupportedNetworks destination,
+        address receiver,
+        address tokenX,
+        address tokenY,
+        uint256 amount
+    ) external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
         (,,, uint64 destinationChainId) = getConfigFromNetwork(destination);
-
-        ProgrammableTokenTransfers(sender).initSwap(token, amount, destinationChainId, receiver);
+        console.log("wesh");
+        tokenRouter(sender).sendToSwap(tokenX, tokenY, amount, destinationChainId, receiver);
 
         console.log(
             "You can now monitor the status of your Chainlink CCIP Message via https://ccip.chain.link using CCIP Message ID: "
