@@ -7,3 +7,10 @@ export type MagicMetadata = {
   recoveryFactors: [];
   walletType: string;
 };
+
+export type Coins = {
+  DAI: number;
+  USDC: number;
+  ETH: number;
+  BTC: number;
+};
