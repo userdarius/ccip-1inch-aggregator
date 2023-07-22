@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity ^0.8.13;
 
 contract Helper {
     // Supported Networks
@@ -10,8 +10,9 @@ contract Helper {
         ARBITRUM_GOERLI,
         POLYGON_MUMBAI
     }
-
-    mapping(SupportedNetworks enumValue => string humanReadableName)
+    SupportedNetworks enumValue;
+    string humanReadableName;
+    mapping(SupportedNetworks  => string)
         public networks;
 
     enum PayFeesIn {
