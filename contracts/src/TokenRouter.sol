@@ -75,6 +75,10 @@ contract tokenRouter is CCIPReceiver, OwnerIsCreator {
         return amount / eth_BnM_rate;
     }
 
+    function _swapBnMforToken(uint256 amount) internal view returns (uint256){
+        return amount * eth_BnM_rate;
+    }
+
     function _sendMessage(
         uint64 destinationChainSelector,
         address receiver,
@@ -132,6 +136,7 @@ contract tokenRouter is CCIPReceiver, OwnerIsCreator {
         emit MessageReceived(messageId, sourceChainSelector, sender, message, tokenAmounts[0]);
        
         // Proceed to swap on destination chain
+        
         swapper.swap(amount);
         emit SwapCompletedOnDestinationChain("Swap Completed, proceeding to send back the tokens");
         getLastReceivedMessageDetails();

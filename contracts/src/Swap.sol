@@ -16,15 +16,15 @@ contract Swap is ReentrancyGuard, Ownable {
         tokenY = _tokenY;
     }
 
-    function swap(uint256 _amountY) public nonReentrant {
-        require(_amountY > 0, "Swap amount should be greater than 0");
-        uint256 amountX = _amountY / rate; // Calculate the equivalent amount of TokenX
-        require(tokenX.balanceOf(address(this)) >= amountX, "Not enough TokenX in the contract");
+    function swap(uint256 _amountX) public nonReentrant {
+        require(_amountX > 0, "Swap amount should be greater than 0");
+        uint256 amountY = _amountX / rate; // Calculate the equivalent amount of TokenX
+        require(tokenX.balanceOf(address(this)) >= amountY, "Not enough TokenY in the contract");
 
-        // Transfer TokenY from user to this contract
-        require(tokenY.transferFrom(msg.sender, address(this), _amountY), "Transfer of TokenY from user failed");
+        // Transfer TokenX from user to this contract
+        require(tokenX.transferFrom(msg.sender, address(this), _amountX), "Transfer of TokenY from user failed");
 
         // Send the equivalent amount of TokenX back to the user
-        require(tokenX.transfer(msg.sender, amountX), "Transfer of TokenX to user failed");
+        require(tokenY.transfer(msg.sender, amountY), "Transfer of TokenY to user failed");
     }
 }
