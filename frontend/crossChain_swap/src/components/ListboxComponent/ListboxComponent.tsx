@@ -3,7 +3,7 @@ import { Listbox, Transition } from "@headlessui/react";
 import { ReactComponent as Arrow } from "../../assets/icons/ArrowBlack.svg";
 import { ReactComponent as CheckPink } from "../../assets/icons/CheckPink.svg";
 import { Token } from "../../utils/types/swap.types";
-import { SwapContext } from "../../context/Swap.context";
+import { ApiContext } from "../../context/Api.context";
 
 type ListboxComponentProps = {
   list: Token[];
@@ -18,7 +18,7 @@ const ListboxComponent: FC<ListboxComponentProps> = ({
 }) => {
   const [selectedToken, setSelectedToken] = useState<Token>(list[0]);
   const { tokenSelected, setTokenSelected, tokenDesired, setTokenDesired } =
-    useContext(SwapContext);
+    useContext(ApiContext);
 
   useEffect(() => {
     const tokenFrom = list.find((token) => token.name === tokenSelected);

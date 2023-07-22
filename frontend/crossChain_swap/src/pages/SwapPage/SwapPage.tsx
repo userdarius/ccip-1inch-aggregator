@@ -14,6 +14,9 @@ import {
 } from "../../utils/helpers/swap.helper";
 import { Coins } from "../../utils/types/global.types";
 import { optiDecimals } from "../../utils/constants/optimism/opti.addresses";
+import CardEstimation from "./CardEstimation/CardEstimation";
+import { ApiContext } from "../../context/Api.context";
+import { trouverPlusGrand } from "../../utils/helpers/global.helper";
 
 const SwapPage = () => {
   const [listCoins] = useState<Token[]>([
@@ -22,11 +25,24 @@ const SwapPage = () => {
     { name: "ETH", svgLogo: ETHLogo },
     { name: "BTC", svgLogo: BTCLogo },
   ]);
-  const [depositAmount, setDepositAmount] = useState<bigint>(BigInt(0));
-  const [estimatedReceiving] = useState<bigint>(BigInt(0));
 
-  const { tokenSelected, balanceCoins, tokenDesired, pricesCoins } =
-    useContext(SwapContext);
+  const { balanceCoins, pricesCoins } = useContext(SwapContext);
+
+  const {
+    tokenSelected,
+    tokenDesired,
+    coinEstimations,
+    depositAmount,
+    setDepositAmount,
+  } = useContext(ApiContext);
+
+  const result = useMemo(() => {
+    return trouverPlusGrand(coinEstimations);
+  }, [coinEstimations]);
+
+  const estimatedReceiving = useMemo(() => {
+    return result.estimatedReceiving;
+  }, [result]);
 
   const estimadedSendingUSD = useMemo(() => {
     const estimatedSendingFormatted = bigIntToDecimal(
@@ -56,8 +72,11 @@ const SwapPage = () => {
     setDepositAmount(BigInt(0));
   }, [tokenSelected]);
 
+  // eslint-disable-next-line no-console
+  console.log(depositAmount);
+
   return (
-    <div className="center h-[calc(100vh-64px)]  bg-bgCardNavbar">
+    <div className="center h-[calc(100vh-64px)] flex-row  gap-6 bg-bgCardNavbar">
       <div className="card mt-8 max-h-[600px] w-[500px]  transform overflow-hidden text-left align-middle shadow-xl transition-all">
         <div className="flex flex-row items-center justify-between border-b-[0.5px] border-solid border-borderCardAbout p-6  text-lg font-medium leading-6 text-gray-900">
           Swap
@@ -127,20 +146,18 @@ const SwapPage = () => {
           />
           <div className=" flex flex-row items-center gap-3 ">
             <div className="flex flex-col gap-2">
-              <div className="text-base font-medium">To</div>
+              <div className="text-base font-medium">
+                To {result.nomBlockchain}
+              </div>
               <ListboxComponent width={224} list={listTo} fromListBox={false} />
-              <div className="text-xs font-medium text-textGray">2.93%</div>
             </div>
 
             <div className="flex flex-col gap-2 ">
-              <div className="text-base font-medium">You will receive</div>
+              <div className="pb-4 text-base font-medium">You will receive</div>
               <input
                 type="number"
                 placeholder="0,00"
-                value={displayBalance(
-                  estimatedReceiving,
-                  optiDecimals[tokenSelected as keyof Coins]
-                )}
+                value={estimatedReceiving.toFixed(4)}
                 disabled
                 className="flex h-[40px] w-[224px]  items-center justify-between rounded-xl border-[0.5px] border-solid border-borderCardAbout p-[10px]"
               />
@@ -190,6 +207,37 @@ const SwapPage = () => {
           >
             <button type="button">Approve</button>
           </div>
+        </div>
+      </div>
+
+      <div className="card mt-8  flex h-[565px] w-[450px] flex-col justify-between gap-5   p-5">
+        <div className=" p-3 text-xl font-extrabold">Roots</div>
+        <div className=" flex  flex-col gap-3 p-5">
+          <CardEstimation
+            chain={"Optimism"}
+            amount={coinEstimations.OPTIMISM}
+            best={result.nomBlockchain === "OPTIMISM"}
+          />
+          <CardEstimation
+            chain={"Polygon"}
+            amount={coinEstimations.POLYGON}
+            best={result.nomBlockchain === "POLYGON"}
+          />
+          <CardEstimation
+            chain={"Mainnet"}
+            amount={coinEstimations.MAINNET}
+            best={result.nomBlockchain === "MAINNET"}
+          />
+          <CardEstimation
+            chain={"BNBchain"}
+            amount={coinEstimations.BNBCHAIN}
+            best={result.nomBlockchain === "BNBCHAIN"}
+          />
+          <CardEstimation
+            chain={"Avalanche"}
+            amount={coinEstimations.AVALANCHE}
+            best={result.nomBlockchain === "AVALANCHE"}
+          />
         </div>
       </div>
     </div>

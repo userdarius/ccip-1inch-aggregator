@@ -92,3 +92,16 @@ export const bigIntToDecimal = (
     throw new Error("bigIntToDecimal failed : " + error);
   }
 };
+
+export const numberToDecimal = (
+  num: number | undefined,
+  decimal: number | undefined
+): number | undefined => {
+  try {
+    if (num !== undefined && decimal !== undefined) {
+      return Number(num) / 10 ** decimal;
+    }
+  } catch (error) {
+    throw new Error("bigIntToDecimal failed : " + error);
+  }
+};

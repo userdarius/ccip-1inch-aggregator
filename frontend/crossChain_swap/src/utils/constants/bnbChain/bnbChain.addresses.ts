@@ -1,4 +1,6 @@
-export const bnbChainAddresses = {
+import { CoinsAddress } from "../../../utils/types/global.types";
+
+export const bnbChainAddresses: CoinsAddress = {
   USDC: "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d",
   DAI: "0x1af3f329e8be154074d8769d1ffa4ee058b1dbc3",
   ETH: "0x2170ed0880ac9a755fd29b2688956bd959f933f8",
