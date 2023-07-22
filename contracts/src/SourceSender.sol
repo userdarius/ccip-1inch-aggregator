@@ -16,7 +16,7 @@ import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-sol
 contract SourceSender is OwnerIsCreator{
     uint256 public number;
 
-        // Event emitted when a message is sent to another chain.
+    // Event emitted when a message is sent to another chain.
     event MessageSent(
         bytes32 indexed messageId, // The unique ID of the message.
         uint64 indexed destinationChainSelector, // The chain selector of the destination chain.

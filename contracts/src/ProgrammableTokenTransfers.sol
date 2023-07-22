@@ -28,7 +28,7 @@ contract ProgrammableTokenTransfers is CCIPReceiver, OwnerIsCreator {
         bytes32 indexed messageId, // The unique ID of the message.
         uint64 indexed destinationChainSelector, // The chain selector of the destination chain.
         address receiver, // The address of the receiver on the destination chain.
-        string message, // The message being sent.
+        bytes message, // The message being sent.
         Client.EVMTokenAmount tokenAmount, // The token amount that was sent.
         uint256 fees // The fees paid for sending the message.
     );
@@ -38,7 +38,7 @@ contract ProgrammableTokenTransfers is CCIPReceiver, OwnerIsCreator {
         bytes32 indexed messageId, // The unique ID of the message.
         uint64 indexed sourceChainSelector, // The chain selector of the source chain.
         address sender, // The address of the sender from the source chain.
-        string message, // The message that was received.
+        bytes message, // The message that was received.
         Client.EVMTokenAmount tokenAmount // The token amount that was received.
     );
 
@@ -46,7 +46,7 @@ contract ProgrammableTokenTransfers is CCIPReceiver, OwnerIsCreator {
     struct Message {
         uint64 sourceChainSelector; // The chain selector of the source chain.
         address sender; // The address of the sender.
-        string message; // The content of the message.
+        bytes message; // The content of the message.
         address token; // received token.
         uint256 amount; // received amount.
     }
@@ -55,25 +55,42 @@ contract ProgrammableTokenTransfers is CCIPReceiver, OwnerIsCreator {
     bytes32[] public receivedMessages; // Array to keep track of the IDs of received messages.
     mapping(bytes32 => Message) public messageDetail; // Mapping from message ID to Message struct, storing details of each received message.
 
+    uint256 eth_BnM_rate = 1e4;
+    //address on sepolia
+    address wethAddr = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    IERC20 WETH = IERC20(wethAddr);
+    // address on Sepolia
+    address BnMAddr = 0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05;
+    IERC20 BnM = IERC20(BnMAddr);
+
     /// @notice Constructor initializes the contract with the router address.
     /// @param router The address of the router contract.
     constructor(address router) CCIPReceiver(router) {}
 
-    /// @notice Sends data to receiver on the destination chain.
-    /// @dev Assumes your contract has sufficient native asset (e.g, ETH on Ethereum, MATIC on Polygon...).
+    function initSwap(uint256 _tokenAmount, uint64 _destinationChainSelector, address receiver ) external {
+        WETH.transferFrom(msg.sender, address(this), _tokenAmount);
+        uint256 amount = _swapETHforBnM(_tokenAmount);
+
+        _sendMessage(_destinationChainSelector, receiver," ", BnMAddr, amount);
+
+    }
+
+     /// @notice Sends data to receiver on the destination chain.
+    /// @dev Assumes your contract has sufficient native asset (e.g, ETH on Ethereum, MATIC on Polygon...). Internal
+    /// function because we must swap ETH for BnM before calling the function
     /// @param destinationChainSelector The identifier (aka selector) for the destination blockchain.
     /// @param receiver The address of the recipient on the destination blockchain.
     /// @param message The string message to be sent.
     /// @param token token address.
     /// @param amount token amount.
     /// @return messageId The ID of the message that was sent.
-    function sendMessage(
+    function _sendMessage(
         uint64 destinationChainSelector,
         address receiver,
-        string calldata message,
+        bytes memory message,
         address token,
         uint256 amount
-    ) external returns (bytes32 messageId) {
+    ) internal returns (bytes32 messageId) {
         // set the tokent amounts
         Client.EVMTokenAmount[]
             memory tokenAmounts = new Client.EVMTokenAmount[](1);
@@ -94,7 +111,7 @@ contract ProgrammableTokenTransfers is CCIPReceiver, OwnerIsCreator {
         });
 
         // Initialize a router client instance to interact with cross-chain router
-        IRouterClient router = IRouterClient(this.getRouter());
+        IRouterClient router = IRouterClient(i_router);
 
         // approve the Router to spend tokens on contract's behalf. I will spend the amount of the given token
         IERC20(token).approve(address(router), amount);
@@ -122,6 +139,13 @@ contract ProgrammableTokenTransfers is CCIPReceiver, OwnerIsCreator {
         return messageId;
     }
 
+    //1 BnM = 10 000 ETH  -- 1 ETH = 0.0001 BnM
+    // 10 000 * 10^18 = 1 * 10^18
+    //1 * 10^18 = 1 * 10^14
+    function _swapETHforBnM(uint256 amount) internal view returns (uint256){
+        return amount / eth_BnM_rate;
+    }
+
     /// handle a received message
     function _ccipReceive(
         Client.Any2EVMMessage memory any2EvmMessage
@@ -133,7 +157,7 @@ contract ProgrammableTokenTransfers is CCIPReceiver, OwnerIsCreator {
             .destTokenAmounts;
         address token = tokenAmounts[0].token; // we expect one token to be transfered at once but of course, you can transfer several tokens.
         uint256 amount = tokenAmounts[0].amount; // we expect one token to be transfered at once but of course, you can transfer several tokens.
-        string memory message = abi.decode(any2EvmMessage.data, (string)); // abi-decoding of the sent string message
+        bytes memory message = abi.decode(any2EvmMessage.data, (bytes)); // abi-decoding of the sent string message
         receivedMessages.push(messageId);
         Message memory detail = Message(
             sourceChainSelector,
@@ -179,7 +203,7 @@ contract ProgrammableTokenTransfers is CCIPReceiver, OwnerIsCreator {
         returns (
             uint64 sourceChainSelector,
             address sender,
-            string memory message,
+            bytes memory message,
             address token,
             uint256 amount
         )
@@ -213,7 +237,7 @@ contract ProgrammableTokenTransfers is CCIPReceiver, OwnerIsCreator {
             bytes32 messageId,
             uint64 sourceChainSelector,
             address sender,
-            string memory message,
+            bytes memory message,
             address token,
             uint256 amount
         )
@@ -247,7 +271,7 @@ contract ProgrammableTokenTransfers is CCIPReceiver, OwnerIsCreator {
             bytes32 messageId,
             uint64 sourceChainSelector,
             address sender,
-            string memory message,
+            bytes memory message,
             address token,
             uint256 amount
         )
