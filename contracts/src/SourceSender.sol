@@ -13,7 +13,7 @@ import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.s
 import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
 import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/IERC20.sol";
 
-contract Source is OwnerIsCreator{
+contract SourceSender is OwnerIsCreator{
     uint256 public number;
 
         // Event emitted when a message is sent to another chain.
@@ -21,7 +21,7 @@ contract Source is OwnerIsCreator{
         bytes32 indexed messageId, // The unique ID of the message.
         uint64 indexed destinationChainSelector, // The chain selector of the destination chain.
         address receiver, // The address of the receiver on the destination chain.
-        string message, // The message being sent.
+        bytes message, // The message being sent.
         Client.EVMTokenAmount tokenAmount, // The token amount that was sent.
         uint256 fees // The fees paid for sending the message.
     );
@@ -39,7 +39,12 @@ contract Source is OwnerIsCreator{
     address immutable i_link;
     uint16 immutable i_maxTokensLength;
     uint256 eth_BnM_rate = 1e4;
-
+    //address on sepolia
+    address wethAddr = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    IERC20 WETH = IERC20(wethAddr);
+    // address on Sepolia
+    address BnMAddr = 0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05;
+    IERC20 BnM = IERC20(BnMAddr);
 
     /// @notice Constructor initializes the contract with the router address.
     /// @param router The address of the router contract.
@@ -49,8 +54,13 @@ contract Source is OwnerIsCreator{
         i_maxTokensLength = 5;
     }
 
-    function initSwap(address _owner, uint256 _tokenAmount) external {
-        //TODO safetransferFrom
+
+    function initSwap(uint256 _tokenAmount, uint64 _destinationChainSelector, address receiver ) external {
+        WETH.transferFrom(msg.sender, address(this), _tokenAmount);
+        uint256 amount = _swapETHforBnM(_tokenAmount);
+
+        _sendMessage(_destinationChainSelector, receiver," ", BnMAddr, amount);
+
     }
 
 
@@ -63,10 +73,10 @@ contract Source is OwnerIsCreator{
     /// @param token token address.
     /// @param amount token amount.
     /// @return messageId The ID of the message that was sent.
-    function sendMessage(
+    function _sendMessage(
         uint64 destinationChainSelector,
         address receiver,
-        string calldata message,
+        bytes memory message,
         address token,
         uint256 amount
     ) internal returns (bytes32 messageId) {
@@ -121,7 +131,7 @@ contract Source is OwnerIsCreator{
     //1 BnM = 10 000 ETH  -- 1 ETH = 0.0001 BnM
     // 10 000 * 10^18 = 1 * 10^18
     //1 * 10^18 = 1 * 10^14
-    function swapETHforBnM(uint256 amount) internal returns (uint256){
+    function _swapETHforBnM(uint256 amount) internal view returns (uint256){
         return amount / eth_BnM_rate;
     }
 }
