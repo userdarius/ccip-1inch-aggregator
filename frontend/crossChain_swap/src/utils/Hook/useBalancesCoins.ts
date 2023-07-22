@@ -15,25 +15,25 @@ const useBalancesCoins = () => {
   useContractReads({
     contracts: [
       {
-        address: optiAddresses.addressUSDC as `0x${string}`,
+        address: optiAddresses.USDC as `0x${string}`,
         abi: erc20ABI as any,
         functionName: "balanceOf",
         args: [address as `0x${string}`],
       },
       {
-        address: optiAddresses.addressDai as `0x${string}`,
+        address: optiAddresses.DAI as `0x${string}`,
         abi: erc20ABI as any,
         functionName: "balanceOf",
         args: [address as `0x${string}`],
       },
       {
-        address: optiAddresses.addresswETH as `0x${string}`,
+        address: optiAddresses.ETH as `0x${string}`,
         abi: erc20ABI as any,
         functionName: "balanceOf",
         args: [address as `0x${string}`],
       },
       {
-        address: optiAddresses.addresswBTC as `0x${string}`,
+        address: optiAddresses.BTC as `0x${string}`,
         abi: erc20ABI as any,
         functionName: "balanceOf",
         args: [address as `0x${string}`],
