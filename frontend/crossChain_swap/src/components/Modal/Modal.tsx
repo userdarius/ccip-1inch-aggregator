@@ -38,7 +38,7 @@ const Modal: React.FC<ModalProps> = ({
     <div className="bg-gray-800 fixed inset-0 flex items-center justify-center bg-opacity-75">
       <div ref={modalRef} className="relative rounded-lg bg-white p-6">
         <button
-          className="text-black absolute top-0 right-2 p-2"
+          className="text-black right-2·top-0 absolute p-2"
           onClick={closeFunction}
         >
           X

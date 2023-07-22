@@ -10,6 +10,8 @@ type MainContextProps = {
   setShowContactModal: Function;
   showContactModal: boolean;
   windowWidth: number;
+  showModalConnexion: boolean;
+  setShowModalConnexion: Function;
 };
 
 type MainProviderProps = {
@@ -20,6 +22,7 @@ export const MainContext = createContext({} as MainContextProps);
 
 const MainProvider: FC<MainProviderProps> = ({ children }) => {
   const [windowWidth, setWindowWidth] = useState<number>(window.innerWidth);
+  const [showModalConnexion, setShowModalConnexion] = useState<boolean>(false);
 
   const [showContactModal, setShowContactModal] = useState<boolean>(false);
 
@@ -41,6 +44,8 @@ const MainProvider: FC<MainProviderProps> = ({ children }) => {
         setShowContactModal,
         showContactModal,
         windowWidth,
+        showModalConnexion,
+        setShowModalConnexion,
       }}
     >
       {children}

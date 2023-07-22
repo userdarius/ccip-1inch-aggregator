@@ -1,9 +1,9 @@
 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="20" height="20" fill="white"/>
-<path d="M5 16H4C2.89543 16 2 15.1046 2 14V4C2 2.89543 2.89543 2 4 2H16C17.1046 2 18 2.89543 18 4V14C18 15.1046 17.1046 16 16 16H15M5 16V18M5 16H15M15 16V18" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<circle cx="10" cy="9" r="2" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="5" y="5" width="10" height="8" rx="1" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="15" y="8" width="1" height="2" rx="0.5" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="4" y="7" width="1" height="1" rx="0.5" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="4" y="10" width="1" height="1" rx="0.5" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+
+<path d="M5 16H4C2.89543 16 2 15.1046 2 14V4C2 2.89543 2.89543 2 4 2H16C17.1046 2 18 2.89543 18 4V14C18 15.1046 17.1046 16 16 16H15M5 16V18M5 16H15M15 16V18" stroke="current" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="10" cy="9" r="2" stroke="current" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="5" y="5" width="10" height="8" rx="1" stroke="current" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="15" y="8" width="1" height="2" rx="0.5" stroke="current" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="4" y="7" width="1" height="1" rx="0.5" stroke="current" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="4" y="10" width="1" height="1" rx="0.5" stroke="   " stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

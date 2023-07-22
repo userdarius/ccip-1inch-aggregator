@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
@@ -6,35 +5,53 @@ import "react-toastify/dist/ReactToastify.css";
 
 import Providers from "./Providers";
 import Routes from "./Routes";
-import { WagmiConfig, createClient, configureChains } from "wagmi";
-import { polygonMumbai } from "@wagmi/core/chains";
 
+import Header from "../components/Header/Header";
+import { configureChains, createConfig, WagmiConfig } from "wagmi";
 import { alchemyProvider } from "wagmi/providers/alchemy";
 import { publicProvider } from "wagmi/providers/public";
-
-import { CoinbaseWalletConnector } from "wagmi/connectors/coinbaseWallet";
-import { InjectedConnector } from "wagmi/connectors/injected";
+import { optimism } from "viem/chains";
 import { MetaMaskConnector } from "wagmi/connectors/metaMask";
-import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
-import Header from "../components/Header/Header";
-const { chains, provider, webSocketProvider } = configureChains(
-  [polygonMumbai],
+import { CoinbaseWalletConnector } from "@wagmi/core/connectors/coinbaseWallet";
+import { WalletConnectConnector } from "@wagmi/core/connectors/walletConnect";
+import { MagicAuthConnector } from "@everipedia/wagmi-magic-connector";
+
+const { chains, publicClient, webSocketPublicClient } = configureChains(
+  [optimism],
   [
-    alchemyProvider({ apiKey: "IqzQnrs653IZafcYRxu894cvMbGdVO7x" }),
+    alchemyProvider({ apiKey: "Qxyx5pvta-u8NGcIAPraZnCO_7z0gobZ" }),
     publicProvider(),
   ]
 );
 
-const client = createClient({
+const config = createConfig({
   autoConnect: true,
-  connectors: [new MetaMaskConnector({ chains })],
-  provider,
-  webSocketProvider,
+  connectors: [
+    new MetaMaskConnector({ chains }),
+    new CoinbaseWalletConnector({
+      chains,
+      options: {
+        appName: "wagmi",
+      },
+    }),
+    new WalletConnectConnector({
+      chains,
+      options: {
+        projectId: "059415c7c59640771e4272d1c7383e7f",
+      },
+    }),
+    new MagicAuthConnector({
+      options: {
+        apiKey: "pk_live_A92E80BE7F60C880",
+      },
+    }),
+  ],
+  publicClient,
+  webSocketPublicClient,
 });
-
 const App = () => {
   return (
-    <WagmiConfig client={client}>
+    <WagmiConfig config={config}>
       <Providers>
         <ToastContainer
           position="top-center"
