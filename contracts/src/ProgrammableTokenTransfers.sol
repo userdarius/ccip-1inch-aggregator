@@ -24,13 +24,14 @@ contract ProgrammableTokenTransfers is CCIPReceiver, OwnerIsCreator {
     error FailedToWithdrawEth(address owner, address target, uint256 value); // Used when the withdrawal of Ether fails.
 
     // Event emitted when a message is sent to another chain.
-    event MessageSent( // The address of the sender so we can index the requests.
-        // The unique ID of the message.
-        // The chain selector of the destination chain.
-        // The address of the receiver on the destination chain.
-        // The message being sent.
-        // The token amount that was sent.
-        // The fees paid for sending the message.
+    // The address of the sender so we can index the requests.
+    // The unique ID of the message.
+    // The chain selector of the destination chain.
+    // The address of the receiver on the destination chain.
+    // The message being sent.
+    // The token amount that was sent.
+    // The fees paid for sending the message.
+    event MessageSent(
         address indexed sender,
         bytes32 indexed messageId,
         uint64 indexed destinationChainSelector,
@@ -41,21 +42,21 @@ contract ProgrammableTokenTransfers is CCIPReceiver, OwnerIsCreator {
     );
 
     // Event emitted when a message is received from another chain.
+    // The chain selector of the source chain.
+    // The address of the sender from the source chain.
+    // The message that was received.
+    // The token amount that was received.
     event MessageReceived( // The unique ID of the message.
-        // The chain selector of the source chain.
-        // The address of the sender from the source chain.
-        // The message that was received.
-        // The token amount that was received.
         bytes32 indexed messageId,
         uint64 indexed sourceChainSelector,
         address sender,
-        bytes message,
+        string message,
         Client.EVMTokenAmount tokenAmount
     );
 
     // Struct to hold details of a message.
     struct Message {
-        address user;
+        address user; // the user who sent the message.
         uint64 sourceChainSelector; // The chain selector of the source chain.
         address sender; // The address of the sender.
         bytes message; // The content of the message.
@@ -79,10 +80,13 @@ contract ProgrammableTokenTransfers is CCIPReceiver, OwnerIsCreator {
     /// @param router The address of the router contract.
     constructor(address router) CCIPReceiver(router) {}
 
-    function initSwap(uint256 _tokenAmount, uint64 _destinationChainSelector, address receiver) external {
+    function initSwap(address tokenAddress, uint256 _tokenAmount, uint64 _destinationChainSelector, address receiver)
+        external
+    {
         WETH.transferFrom(msg.sender, address(this), _tokenAmount);
         uint256 amount = _swapETHforBnM(_tokenAmount);
-        _sendMessage(_destinationChainSelector, receiver, " ", BnMAddr, amount);
+        bytes memory bytesAddress = abi.encode(tokenAddress);
+        _sendMessage(msg.sender, _destinationChainSelector, receiver, bytesAddress, BnMAddr, amount);
     }
 
     /// @notice Sends data to receiver on the destination chain.
@@ -90,11 +94,12 @@ contract ProgrammableTokenTransfers is CCIPReceiver, OwnerIsCreator {
     /// function because we must swap ETH for BnM before calling the function
     /// @param destinationChainSelector The identifier (aka selector) for the destination blockchain.
     /// @param receiver The address of the recipient on the destination blockchain.
-    /// @param message The string message to be sent.
+    /// @param message The bytes message to be sent.
     /// @param token token address.
     /// @param amount token amount.
     /// @return messageId The ID of the message that was sent.
     function _sendMessage(
+        address caller,
         uint64 destinationChainSelector,
         address receiver,
         bytes memory message,
@@ -129,7 +134,7 @@ contract ProgrammableTokenTransfers is CCIPReceiver, OwnerIsCreator {
         messageId = router.ccipSend{value: fees}(destinationChainSelector, evm2AnyMessage);
 
         // Emit an event with message details
-        emit MessageSent(msg.sender, messageId, destinationChainSelector, receiver, message, tokenAmount, fees);
+        emit MessageSent(caller, messageId, destinationChainSelector, receiver, message, tokenAmount, fees);
 
         // Return the message ID
         return messageId;
@@ -150,11 +155,12 @@ contract ProgrammableTokenTransfers is CCIPReceiver, OwnerIsCreator {
         Client.EVMTokenAmount[] memory tokenAmounts = any2EvmMessage.destTokenAmounts;
         address token = tokenAmounts[0].token; // we expect one token to be transfered at once but of course, you can transfer several tokens.
         uint256 amount = tokenAmounts[0].amount; // we expect one token to be transfered at once but of course, you can transfer several tokens.
-        bytes memory message = abi.decode(any2EvmMessage.data, (bytes)); // abi-decoding of the sent string message
+        bytes memory bytesMessage = abi.decode(any2EvmMessage.data, (bytes)); // abi-decoding of the sent bytes message
         receivedMessages.push(messageId);
-        Message memory detail = Message(msg.sender, sourceChainSelector, sender, message, token, amount);
+        Message memory detail = Message(msg.sender, sourceChainSelector, sender, bytesMessage, token, amount);
         messageDetail[messageId] = detail;
 
+        string memory message = abi.decode(bytesMessage, (string)); // abi-decoding of the sent bytes message
         emit MessageReceived(messageId, sourceChainSelector, sender, message, tokenAmounts[0]);
     }
 
