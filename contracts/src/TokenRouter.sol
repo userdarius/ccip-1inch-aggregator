@@ -16,7 +16,6 @@ contract TokenRouter is CCIPReceiver, OwnerIsCreator {
     error FailedToWithdrawEth(address owner, address target, uint256 value); // Used when the withdrawal of Ether fails.
 
     Swap public swapper;
-    address BnMAddress = 0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05;
 
     event MessageSent(
         bytes32 indexed messageId,
@@ -31,7 +30,7 @@ contract TokenRouter is CCIPReceiver, OwnerIsCreator {
         bytes32 indexed messageId,
         uint64 indexed sourceChainSelector,
         address sender,
-        bytes message,
+        address message,
         Client.EVMTokenAmount tokenAmount
     );
 
@@ -41,7 +40,7 @@ contract TokenRouter is CCIPReceiver, OwnerIsCreator {
         address user;
         uint64 sourceChainSelector;
         address sender;
-        bytes message;
+        address message;
         address token;
         uint256 amount;
     }
@@ -60,13 +59,13 @@ contract TokenRouter is CCIPReceiver, OwnerIsCreator {
         uint64 _destinationChainSelector,
         address receiver
     ) external {
-         IERC20 token = IERC20(tokenX);
+        IERC20 token = IERC20(tokenX);
         token.transferFrom(msg.sender, address(this), _tokenAmount);
         //uint256 amount = _swapTokenforBnM(_tokenAmount);
         // Encode the token to swap to once on the other chain
-        address message = tokenY;
+        bytes memory message = abi.encode(tokenY);
         // Send the message to the other chain
-        _sendMessage(_destinationChainSelector, receiver, message, BnMAddress, _tokenAmount);
+        _sendMessage(_destinationChainSelector, receiver, message, tokenX, _tokenAmount);
     }
 
     //1 BnM = 10 000 ETH  -- 1 ETH = 0.0001 BnM
@@ -76,14 +75,14 @@ contract TokenRouter is CCIPReceiver, OwnerIsCreator {
         return amount / eth_BnM_rate;
     }
 
-    function _swapBnMforToken(uint256 amount) internal view returns (uint256){
+    function _swapBnMforToken(uint256 amount) internal view returns (uint256) {
         return amount * eth_BnM_rate;
     }
 
     function _sendMessage(
         uint64 destinationChainSelector,
         address receiver,
-        address message,
+        bytes memory message,
         address token,
         uint256 amount
     ) internal returns (bytes32 messageId) {
@@ -100,7 +99,7 @@ contract TokenRouter is CCIPReceiver, OwnerIsCreator {
         // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
         Client.EVM2AnyMessage memory evm2AnyMessage = Client.EVM2AnyMessage({
             receiver: abi.encode(receiver), // ABI-encoded receiver address
-            data: abi.encode(message), // ABI-encoded string message
+            data: message, // ABI-encoded string message
             tokenAmounts: tokenAmounts, // Tokens amounts
             extraArgs: Client._argsToBytes(
                 Client.EVMExtraArgsV1({gasLimit: 200_000, strict: false}) // Additional arguments, setting gas limit and non-strict sequency mode
@@ -121,8 +120,7 @@ contract TokenRouter is CCIPReceiver, OwnerIsCreator {
         messageId = router.ccipSend{value: fees}(destinationChainSelector, evm2AnyMessage);
 
         // Emit an event with message details
-        bytes memory messageBytes = abi.encode(message);
-        emit MessageSent(messageId, destinationChainSelector, receiver, messageBytes, tokenAmount, fees);
+        emit MessageSent(messageId, destinationChainSelector, receiver, message, tokenAmount, fees);
 
         // Return the message ID
         return messageId;
@@ -135,17 +133,16 @@ contract TokenRouter is CCIPReceiver, OwnerIsCreator {
         Client.EVMTokenAmount[] memory tokenAmounts = any2EvmMessage.destTokenAmounts;
         address token = tokenAmounts[0].token; // we expect one token to be transfered at once but of course, you can transfer several tokens.
         uint256 amount = tokenAmounts[0].amount; // we expect one token to be transfered at once but of course, you can transfer several tokens.
-        bytes memory bytesMessage = abi.decode(any2EvmMessage.data, (bytes)); // abi-decoding of the sent bytes message
+        address addressMessage = abi.decode(any2EvmMessage.data, (address)); // abi-decoding of the sent bytes message
         receivedMessages.push(messageId);
-        Message memory detail = Message(msg.sender, sourceChainSelector, sender, bytesMessage, token, amount);
+        Message memory detail = Message(msg.sender, sourceChainSelector, sender, addressMessage, token, amount);
         messageDetail[messageId] = detail;
 
-        address message = abi.decode(bytesMessage, (address)); // abi-decoding of the sent bytes message
-        emit MessageReceived(messageId, sourceChainSelector, sender, bytesMessage, tokenAmounts[0]);
-       
+        emit MessageReceived(messageId, sourceChainSelector, sender, addressMessage, tokenAmounts[0]);
+
         // Proceed to swap on destination chain
-        amount = _swapBnMforToken(amount);
-        amount = swapper.swap(amount);
+        //amount = _swapBnMforToken(amount);
+        //amount = swapper.swap(amount);
         emit SwapCompletedOnDestinationChain("Swap Completed, proceeding to send back the tokens");
         getLastReceivedMessageDetails();
         // Send back the tokens to the source chain
@@ -174,7 +171,6 @@ contract TokenRouter is CCIPReceiver, OwnerIsCreator {
     /// @param _beneficiary The address to which the tokens will be sent.
     /// @param _token The contract address of the ERC20 token to be withdrawn.
 
-
     function withdrawToken(address _beneficiary, address _token) public onlyOwner {
         // Retrieve the balance of this contract
         uint256 amount = IERC20(_token).balanceOf(address(this));
@@ -188,7 +184,7 @@ contract TokenRouter is CCIPReceiver, OwnerIsCreator {
     function getReceivedMessageDetails(bytes32 messageId)
         public
         view
-        returns (uint64 sourceChainSelector, address sender, bytes memory message, address token, uint256 amount)
+        returns (uint64 sourceChainSelector, address sender, address message, address token, uint256 amount)
     {
         Message memory detail = messageDetail[messageId];
         if (detail.sender == address(0)) revert MessageIdNotExist(messageId);
@@ -202,7 +198,7 @@ contract TokenRouter is CCIPReceiver, OwnerIsCreator {
             bytes32 messageId,
             uint64 sourceChainSelector,
             address sender,
-            bytes memory message,
+            address message,
             address token,
             uint256 amount
         )
