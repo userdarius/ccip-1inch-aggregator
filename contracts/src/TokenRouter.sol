@@ -8,7 +8,7 @@ import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications
 import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/IERC20.sol";
 import {Swap} from "./Swap.sol";
 
-contract tokenRouter is CCIPReceiver, OwnerIsCreator {
+contract TokenRouter is CCIPReceiver, OwnerIsCreator {
     error NoMessageReceived(); // Used when trying to access a message but no messages have been received.
     error IndexOutOfBound(uint256 providedIndex, uint256 maxIndex); // Used when the provided index is out of bounds.
     error MessageIdNotExist(bytes32 messageId); // Used when the provided message ID does not exist.
@@ -16,6 +16,7 @@ contract tokenRouter is CCIPReceiver, OwnerIsCreator {
     error FailedToWithdrawEth(address owner, address target, uint256 value); // Used when the withdrawal of Ether fails.
 
     Swap public swapper;
+    address BnMAddress = 0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05;
 
     event MessageSent(
         bytes32 indexed messageId,
@@ -30,7 +31,7 @@ contract tokenRouter is CCIPReceiver, OwnerIsCreator {
         bytes32 indexed messageId,
         uint64 indexed sourceChainSelector,
         address sender,
-        string message,
+        bytes message,
         Client.EVMTokenAmount tokenAmount
     );
 
@@ -61,11 +62,11 @@ contract tokenRouter is CCIPReceiver, OwnerIsCreator {
     ) external {
          IERC20 token = IERC20(tokenX);
         token.transferFrom(msg.sender, address(this), _tokenAmount);
-        uint256 amount = _swapTokenforBnM(_tokenAmount);
+        //uint256 amount = _swapTokenforBnM(_tokenAmount);
         // Encode the token to swap to once on the other chain
-        bytes memory message = abi.encode(tokenY);
+        address message = tokenY;
         // Send the message to the other chain
-        _sendMessage(_destinationChainSelector, receiver, message, tokenX, amount);
+        _sendMessage(_destinationChainSelector, receiver, message, BnMAddress, _tokenAmount);
     }
 
     //1 BnM = 10 000 ETH  -- 1 ETH = 0.0001 BnM
@@ -82,11 +83,17 @@ contract tokenRouter is CCIPReceiver, OwnerIsCreator {
     function _sendMessage(
         uint64 destinationChainSelector,
         address receiver,
-        bytes memory message,
+        address message,
         address token,
         uint256 amount
     ) internal returns (bytes32 messageId) {
         // set the tokent amounts
+
+        //TODO verifier les deux lignes dessous
+        // if (msg.sender != address(this)){
+        //     amount = _swapBnMforToken(amount);
+        // }
+
         Client.EVMTokenAmount[] memory tokenAmounts = new Client.EVMTokenAmount[](1);
         Client.EVMTokenAmount memory tokenAmount = Client.EVMTokenAmount({token: token, amount: amount});
         tokenAmounts[0] = tokenAmount;
@@ -114,7 +121,8 @@ contract tokenRouter is CCIPReceiver, OwnerIsCreator {
         messageId = router.ccipSend{value: fees}(destinationChainSelector, evm2AnyMessage);
 
         // Emit an event with message details
-        emit MessageSent(messageId, destinationChainSelector, receiver, message, tokenAmount, fees);
+        bytes memory messageBytes = abi.encode(message);
+        emit MessageSent(messageId, destinationChainSelector, receiver, messageBytes, tokenAmount, fees);
 
         // Return the message ID
         return messageId;
@@ -132,15 +140,16 @@ contract tokenRouter is CCIPReceiver, OwnerIsCreator {
         Message memory detail = Message(msg.sender, sourceChainSelector, sender, bytesMessage, token, amount);
         messageDetail[messageId] = detail;
 
-        string memory message = abi.decode(bytesMessage, (string)); // abi-decoding of the sent bytes message
-        emit MessageReceived(messageId, sourceChainSelector, sender, message, tokenAmounts[0]);
+        address message = abi.decode(bytesMessage, (address)); // abi-decoding of the sent bytes message
+        emit MessageReceived(messageId, sourceChainSelector, sender, bytesMessage, tokenAmounts[0]);
        
         // Proceed to swap on destination chain
-        
-        swapper.swap(amount);
+        amount = _swapBnMforToken(amount);
+        amount = swapper.swap(amount);
         emit SwapCompletedOnDestinationChain("Swap Completed, proceeding to send back the tokens");
         getLastReceivedMessageDetails();
         // Send back the tokens to the source chain
+        //amount = _swapTokenforBnM(amount);
         //_sendMessage(sourceChainSelector, sender, bytesMessage, token, amount);
     }
 
@@ -164,6 +173,8 @@ contract tokenRouter is CCIPReceiver, OwnerIsCreator {
     /// @dev This function reverts with a 'NothingToWithdraw' error if there are no tokens to withdraw.
     /// @param _beneficiary The address to which the tokens will be sent.
     /// @param _token The contract address of the ERC20 token to be withdrawn.
+
+
     function withdrawToken(address _beneficiary, address _token) public onlyOwner {
         // Retrieve the balance of this contract
         uint256 amount = IERC20(_token).balanceOf(address(this));
