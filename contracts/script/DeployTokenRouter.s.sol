@@ -5,14 +5,14 @@ import "forge-std/Script.sol";
 import "./Helper.sol";
 import {tokenRouter} from "../src/TokenRouter.sol";
 
-contract DeployProgrammableTokenTransfers is Script, Helper {
+contract DeployTokenRouter is Script, Helper {
     function run(SupportedNetworks network) external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
         (address router,,,) = getConfigFromNetwork(network);
 
-        tokenRouter programmableTokenTransfers = new tokenRouter(
+        tokenRouter tokenRouterFujiToSepolia = new tokenRouter(
                 router
             );
 
@@ -20,7 +20,7 @@ contract DeployProgrammableTokenTransfers is Script, Helper {
             "ProgrammableTokenTransfers contract deployed on ",
             networks[network],
             "with address: ",
-            address(programmableTokenTransfers)
+            address(tokenRouterFujiToSepolia)
         );
 
         vm.stopBroadcast();

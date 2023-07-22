@@ -59,7 +59,7 @@ contract tokenRouter is CCIPReceiver, OwnerIsCreator {
         uint64 _destinationChainSelector,
         address receiver
     ) external {
-         IERC20 token = IERC20(tokenX);
+        IERC20 token = IERC20(tokenX);
         token.transferFrom(msg.sender, address(this), _tokenAmount);
         uint256 amount = _swapTokenforBnM(_tokenAmount);
         // Encode the token to swap to once on the other chain
@@ -75,7 +75,7 @@ contract tokenRouter is CCIPReceiver, OwnerIsCreator {
         return amount / eth_BnM_rate;
     }
 
-    function _swapBnMforToken(uint256 amount) internal view returns (uint256){
+    function _swapBnMforToken(uint256 amount) internal view returns (uint256) {
         return amount * eth_BnM_rate;
     }
 
@@ -134,12 +134,12 @@ contract tokenRouter is CCIPReceiver, OwnerIsCreator {
 
         string memory message = abi.decode(bytesMessage, (string)); // abi-decoding of the sent bytes message
         emit MessageReceived(messageId, sourceChainSelector, sender, message, tokenAmounts[0]);
-       
+
         // Proceed to swap on destination chain
-        
+        getLastReceivedMessageDetails();
+
         swapper.swap(amount);
         emit SwapCompletedOnDestinationChain("Swap Completed, proceeding to send back the tokens");
-        getLastReceivedMessageDetails();
         // Send back the tokens to the source chain
         //_sendMessage(sourceChainSelector, sender, bytesMessage, token, amount);
     }
