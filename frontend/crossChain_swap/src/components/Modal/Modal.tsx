@@ -35,10 +35,10 @@ const Modal: React.FC<ModalProps> = ({
   }
 
   return (
-    <div className="bg-gray-800 fixed inset-0 flex items-center justify-center bg-opacity-75">
+    <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75">
       <div ref={modalRef} className="relative rounded-lg bg-white p-6">
         <button
-          className="text-black right-2·top-0 absolute p-2"
+          className="right-2·top-0 absolute p-2 text-black"
           onClick={closeFunction}
         >
           X

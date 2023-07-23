@@ -19,7 +19,7 @@ const TemplatePage = () => {
       </div>
 
       <Modal showModal={isOpen} closeFunction={() => setIsOpen(false)}>
-        <div className="text-black pt-6">Hello I am a modal</div>
+        <div className="pt-6 text-black">Hello I am a modal</div>
       </Modal>
     </>
   );

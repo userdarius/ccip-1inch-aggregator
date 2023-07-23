@@ -37,7 +37,7 @@ const Header = () => {
           navigate("/Swap");
         }}
       >
-        (LOGO) CROSSCHAINSWAP
+        POSEIDON
       </div>
 
       <div className="flex items-center justify-center gap-[12px] space-x-2">

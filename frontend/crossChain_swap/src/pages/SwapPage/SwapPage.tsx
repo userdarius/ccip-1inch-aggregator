@@ -17,6 +17,7 @@ import { optiDecimals } from "../../utils/constants/optimism/opti.addresses";
 import CardEstimation from "./CardEstimation/CardEstimation";
 import { ApiContext } from "../../context/Api.context";
 import { trouverPlusGrand } from "../../utils/helpers/global.helper";
+import { useAccount } from "wagmi";
 
 const SwapPage = () => {
   const [listCoins] = useState<Token[]>([
@@ -27,6 +28,7 @@ const SwapPage = () => {
   ]);
 
   const { balanceCoins, pricesCoins } = useContext(SwapContext);
+  const { isConnected } = useAccount();
 
   const {
     tokenSelected,
@@ -72,9 +74,6 @@ const SwapPage = () => {
     setDepositAmount(BigInt(0));
   }, [tokenSelected]);
 
-  // eslint-disable-next-line no-console
-  console.log(depositAmount);
-
   return (
     <div className="center h-[calc(100vh-64px)] flex-row  gap-6 bg-bgCardNavbar">
       <div className="card mt-8 max-h-[600px] w-[500px]  transform overflow-hidden text-left align-middle shadow-xl transition-all">
@@ -84,7 +83,9 @@ const SwapPage = () => {
         <div className="borderBottom m-auto flex flex-col  gap-5 p-5">
           <div className="flex flex-row items-center gap-3 ">
             <div className="flex flex-col gap-2">
-              <div className="text-base font-medium">From Wallet</div>
+              <div className="text-base font-medium">
+                From Wallet {isConnected && "Optismim"}
+              </div>
               <ListboxComponent
                 width={224}
                 list={listFrom}
