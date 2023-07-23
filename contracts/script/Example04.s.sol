@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/Script.sol";
 import "./Helper.sol";
 import {TokenRouter} from "../src/TokenRouter.sol";
+import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/IERC20.sol";
 
 contract DeployProgrammableTokenTransfers is Script, Helper {
     function run(SupportedNetworks network) external {
@@ -41,6 +42,8 @@ contract SendTokensAndData is Script, Helper {
 
         (,,, uint64 destinationChainId) = getConfigFromNetwork(destination);
         console.log("wesh");
+        vm.label(tokenX, "tokenX");
+        IERC20(tokenX).approve(sender, amount);
         TokenRouter(sender).sendToSwap(tokenX, tokenY, amount, destinationChainId, receiver);
 
         console.log(

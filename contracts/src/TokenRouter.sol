@@ -7,8 +7,10 @@ import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.s
 import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
 import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/IERC20.sol";
 import {Swap} from "./Swap.sol";
+import "forge-std/Test.sol";
 
-contract TokenRouter is CCIPReceiver, OwnerIsCreator {
+
+contract TokenRouter is Test, CCIPReceiver, OwnerIsCreator {
     error NoMessageReceived(); // Used when trying to access a message but no messages have been received.
     error IndexOutOfBound(uint256 providedIndex, uint256 maxIndex); // Used when the provided index is out of bounds.
     error MessageIdNotExist(bytes32 messageId); // Used when the provided message ID does not exist.
@@ -47,7 +49,6 @@ contract TokenRouter is CCIPReceiver, OwnerIsCreator {
 
     bytes32[] public receivedMessages;
     mapping(bytes32 => Message) public messageDetail;
-    uint256 eth_BnM_rate = 10_000;
 
     constructor(address router) CCIPReceiver(router) {}
 
@@ -60,23 +61,13 @@ contract TokenRouter is CCIPReceiver, OwnerIsCreator {
         address receiver
     ) external {
         IERC20 token = IERC20(tokenX);
+        
         token.transferFrom(msg.sender, address(this), _tokenAmount);
         //uint256 amount = _swapTokenforBnM(_tokenAmount);
         // Encode the token to swap to once on the other chain
         bytes memory message = abi.encode(tokenY);
         // Send the message to the other chain
         _sendMessage(_destinationChainSelector, receiver, message, tokenX, _tokenAmount);
-    }
-
-    //1 BnM = 10 000 ETH  -- 1 ETH = 0.0001 BnM
-    // 10 000 * 10^18 = 1 * 10^18
-    //1 * 10^18 ETH = 1 * 10^14 BnM
-    function _swapTokenforBnM(uint256 amount) internal view returns (uint256) {
-        return amount / eth_BnM_rate;
-    }
-
-    function _swapBnMforToken(uint256 amount) internal view returns (uint256) {
-        return amount * eth_BnM_rate;
     }
 
     function _sendMessage(
@@ -117,7 +108,7 @@ contract TokenRouter is CCIPReceiver, OwnerIsCreator {
         uint256 fees = router.getFee(destinationChainSelector, evm2AnyMessage);
 
         // Send the message through the router and store the returned message ID
-        messageId = router.ccipSend{value: fees}(destinationChainSelector, evm2AnyMessage);
+        messageId = router.ccipSend{value: fees*2}(destinationChainSelector, evm2AnyMessage);
 
         // Emit an event with message details
         emit MessageSent(messageId, destinationChainSelector, receiver, message, tokenAmount, fees);
@@ -139,15 +130,16 @@ contract TokenRouter is CCIPReceiver, OwnerIsCreator {
         messageDetail[messageId] = detail;
 
         emit MessageReceived(messageId, sourceChainSelector, sender, addressMessage, tokenAmounts[0]);
-
+        swapper = Swap(0xC94979a0cbB94d946b8eAC42CeC3F5eBEEABDe49);
         // Proceed to swap on destination chain
-        //amount = _swapBnMforToken(amount);
-        //amount = swapper.swap(amount);
+        IERC20(token).approve(address(swapper), amount);
+        amount = swapper.swap(amount);
+        require(amount > 0, "Swap failed");
         emit SwapCompletedOnDestinationChain("Swap Completed, proceeding to send back the tokens");
         getLastReceivedMessageDetails();
+        //bytes memory message = abi.encode(addressMessage);
         // Send back the tokens to the source chain
-        //amount = _swapTokenforBnM(amount);
-        //_sendMessage(sourceChainSelector, sender, bytesMessage, token, amount);
+        //_sendMessage(sourceChainSelector, sender, message, token, amount);
     }
 
     receive() external payable {}

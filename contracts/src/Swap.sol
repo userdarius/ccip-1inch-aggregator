@@ -9,8 +9,6 @@ contract Swap is ReentrancyGuard, Ownable {
     IERC20 public tokenX;
     IERC20 public tokenY;
 
-    uint256 public rate = 1000; // 1 TokenX equals 1000 TokenY
-
     constructor(IERC20 _tokenX, IERC20 _tokenY) {
         tokenX = _tokenX;
         tokenY = _tokenY;
@@ -18,7 +16,7 @@ contract Swap is ReentrancyGuard, Ownable {
 
     function swap(uint256 _amountX) public nonReentrant returns (uint256){
         require(_amountX > 0, "Swap amount should be greater than 0");
-        uint256 amountY = _amountX / rate; // Calculate the equivalent amount of TokenX
+        uint256 amountY = _amountX ; // Calculate the equivalent amount of TokenX
         require(tokenX.balanceOf(address(this)) >= amountY, "Not enough TokenY in the contract");
 
         // Transfer TokenX from user to this contract
