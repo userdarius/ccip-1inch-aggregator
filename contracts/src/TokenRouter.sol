@@ -5,10 +5,9 @@ import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/
 import {OwnerIsCreator} from "@chainlink/contracts-ccip/src/v0.8/shared/access/OwnerIsCreator.sol";
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
 import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
-import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/IERC20.sol";
 import {Swap} from "./Swap.sol";
+import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/IERC20.sol";
 import "forge-std/Test.sol";
-
 
 contract TokenRouter is Test, CCIPReceiver, OwnerIsCreator {
     error NoMessageReceived(); // Used when trying to access a message but no messages have been received.
@@ -61,7 +60,7 @@ contract TokenRouter is Test, CCIPReceiver, OwnerIsCreator {
         address receiver
     ) external {
         IERC20 token = IERC20(tokenX);
-        
+
         token.transferFrom(msg.sender, address(this), _tokenAmount);
         //uint256 amount = _swapTokenforBnM(_tokenAmount);
         // Encode the token to swap to once on the other chain
@@ -93,7 +92,7 @@ contract TokenRouter is Test, CCIPReceiver, OwnerIsCreator {
             data: message, // ABI-encoded string message
             tokenAmounts: tokenAmounts, // Tokens amounts
             extraArgs: Client._argsToBytes(
-                Client.EVMExtraArgsV1({gasLimit: 200_000, strict: false}) // Additional arguments, setting gas limit and non-strict sequency mode
+                Client.EVMExtraArgsV1({gasLimit: 300_000, strict: false}) // Additional arguments, setting gas limit and non-strict sequency mode
             ),
             feeToken: address(0) // Setting feeToken to zero address, indicating native asset will be used for fees
         });
@@ -108,7 +107,7 @@ contract TokenRouter is Test, CCIPReceiver, OwnerIsCreator {
         uint256 fees = router.getFee(destinationChainSelector, evm2AnyMessage);
 
         // Send the message through the router and store the returned message ID
-        messageId = router.ccipSend{value: fees*2}(destinationChainSelector, evm2AnyMessage);
+        messageId = router.ccipSend{value: fees}(destinationChainSelector, evm2AnyMessage);
 
         // Emit an event with message details
         emit MessageSent(messageId, destinationChainSelector, receiver, message, tokenAmount, fees);
@@ -130,17 +129,19 @@ contract TokenRouter is Test, CCIPReceiver, OwnerIsCreator {
         messageDetail[messageId] = detail;
 
         emit MessageReceived(messageId, sourceChainSelector, sender, addressMessage, tokenAmounts[0]);
-        swapper = Swap(0xC94979a0cbB94d946b8eAC42CeC3F5eBEEABDe49);
+        //swapper = Swap(payable(0xbf7c78b272e2F57B603699D9b598c93f3ec971B8));
         // Proceed to swap on destination chain
-        IERC20(token).approve(address(swapper), amount);
-        amount = swapper.swap(amount);
-        require(amount > 0, "Swap failed");
-        emit SwapCompletedOnDestinationChain("Swap Completed, proceeding to send back the tokens");
-        getLastReceivedMessageDetails();
+        //IERC20 tokenX = IERC20(token);
+        //IERC20(token).approve(address(swapper), amount);
+        //swapper.swap(IERC20(token), amount);
+        //emit SwapCompletedOnDestinationChain("Swap Completed, proceeding to send back the tokens");
         //bytes memory message = abi.encode(addressMessage);
+        //address tokenY = addressMessage;
+        address tokenY = 0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05;
         // Send back the tokens to the source chain
-        //_sendMessage(sourceChainSelector, sender, message, token, amount);
+        //_sendMessage(sourceChainSelector, sender,"", tokenY, IERC20(tokenY).balanceOf(address(this)));
     }
+    
 
     receive() external payable {}
 

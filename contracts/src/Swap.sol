@@ -6,25 +6,31 @@ import "openzeppelin/security/ReentrancyGuard.sol";
 import "openzeppelin/access/Ownable.sol";
 
 contract Swap is ReentrancyGuard, Ownable {
-    IERC20 public tokenX;
-    IERC20 public tokenY;
+
+    IERC20 public immutable tokenX;
+    IERC20 public immutable tokenY;
 
     constructor(IERC20 _tokenX, IERC20 _tokenY) {
         tokenX = _tokenX;
         tokenY = _tokenY;
     }
+    
+    receive() external payable {}
 
-    function swap(uint256 _amountX) public nonReentrant returns (uint256){
-        require(_amountX > 0, "Swap amount should be greater than 0");
-        uint256 amountY = _amountX ; // Calculate the equivalent amount of TokenX
-        require(tokenX.balanceOf(address(this)) >= amountY, "Not enough TokenY in the contract");
 
-        // Transfer TokenX from user to this contract
-        require(tokenX.transferFrom(msg.sender, address(this), _amountX), "Transfer of TokenY from user failed");
+    function swap(IERC20 token, uint256 amount) public nonReentrant returns (uint256) {
+        require(amount > 0, "Swap amount should be greater than 0");
 
-        // Send the equivalent amount of TokenX back to the user
-        require(tokenY.transfer(msg.sender, amountY), "Transfer of TokenY to user failed");
+        (IERC20 tokenIn, IERC20 tokenOut) = token == tokenX ? (tokenX, tokenY) : (tokenY, tokenX);
 
-        return amountY;
+        require(tokenOut.balanceOf(address(this)) >= amount, "Not enough Token in the contract");
+
+        // Transfer Token from user to this contract
+        tokenIn.transferFrom(msg.sender, address(this), amount);
+
+        // Send the equivalent amount of Token back to the user
+        tokenOut.transfer(msg.sender, amount);
+
+        return amount;
     }
 }

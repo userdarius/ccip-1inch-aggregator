@@ -24,7 +24,6 @@ contract tokenRouterTest is Test {
         "https://eth-sepolia.g.alchemy.com/v2/rSzq1mBkglecUjABcZVUsqElDDh591ds";
 
     function setUp() public {
-        uint256 sepolia = vm.createSelectFork(SEPOLIA_RPC_URL); // eth mainnet at block 16_153_817
         tokenRouter = new TokenRouter(sepoliaRouterAddress);
 
         // Deploy the contract
