@@ -63,7 +63,6 @@ contract TokenRouter is Test, CCIPReceiver, OwnerIsCreator {
         IERC20 token = IERC20(tokenX);
         
         token.transferFrom(msg.sender, address(this), _tokenAmount);
-        //uint256 amount = _swapTokenforBnM(_tokenAmount);
         // Encode the token to swap to once on the other chain
         bytes memory message = abi.encode(tokenY);
         // Send the message to the other chain
