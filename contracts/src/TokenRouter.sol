@@ -129,18 +129,17 @@ contract TokenRouter is Test, CCIPReceiver, OwnerIsCreator {
         messageDetail[messageId] = detail;
 
         emit MessageReceived(messageId, sourceChainSelector, sender, addressMessage, tokenAmounts[0]);
-        //swapper = Swap(payable(0xbf7c78b272e2F57B603699D9b598c93f3ec971B8));
+        swapper = Swap(payable(0xbf7c78b272e2F57B603699D9b598c93f3ec971B8));
         // Proceed to swap on destination chain
-        //IERC20 tokenX = IERC20(token);
-        //IERC20(token).approve(address(swapper), amount);
-        //swapper.swap(IERC20(token), amount);
-        //emit SwapCompletedOnDestinationChain("Swap Completed, proceeding to send back the tokens");
-        //bytes memory message = abi.encode(addressMessage);
-        //address tokenY = addressMessage;
-        //address tokenY = 0x466D489b6d36E7E3b824ef491C225F5830E81cC1;
+        IERC20 tokenX = IERC20(token);
+        IERC20(token).approve(address(swapper), amount);
+        swapper.swap(IERC20(token), amount);
+        emit SwapCompletedOnDestinationChain("Swap Completed, proceeding to send back the tokens");
+        bytes memory message = abi.encode(addressMessage);
+        address tokenY = addressMessage;
         // Send back the tokens to the source chain
-        //bytes memory message = abi.encode(tokenY);
-        //_sendMessage(14767482510784806043, sender, message, tokenY, 500);
+        bytes memory message = abi.encode(tokenY);
+        _sendMessage(14767482510784806043, sender, message, tokenY, 500);
     }
     
 
